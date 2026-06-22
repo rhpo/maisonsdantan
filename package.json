@@ -1,0 +1,37 @@
+{
+	"name": "maisonsdantan",
+	"private": true,
+	"version": "1.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"migrate:db": "npx tsx scripts/migrate-db.ts",
+		"migrate:uploads": "npx tsx scripts/migrate-uploads.ts"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^7.0.1",
+		"@sveltejs/kit": "^2.63.0",
+		"@sveltejs/vite-plugin-svelte": "^7.1.2",
+		"@types/sharp": "^0.32.0",
+		"svelte": "^5.56.1",
+		"svelte-check": "^4.6.0",
+		"tsx": "^4.0.0",
+		"typescript": "^6.0.3",
+		"vite": "^8.0.16"
+	},
+	"dependencies": {
+		"@fortawesome/free-brands-svg-icons": "^6.7.2",
+		"@fortawesome/free-regular-svg-icons": "^6.7.2",
+		"@fortawesome/free-solid-svg-icons": "^6.7.2",
+		"@supabase/ssr": "^0.6.1",
+		"@supabase/supabase-js": "^2.49.0",
+		"sharp": "^0.34.0",
+		"svelte-fa": "^4.0.2",
+		"svelte-meta-tags": "^4.0.0"
+	}
+}
