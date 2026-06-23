@@ -1,21 +1,23 @@
 <script lang="ts">
   import { scale } from "svelte/transition";
-  import {
-    faMoon,
-    faSun,
-    faShoppingBag,
-  } from "@fortawesome/free-solid-svg-icons";
+  import { faMoon, faSun } from "@fortawesome/free-solid-svg-icons";
   import Fa from "svelte-fa";
   import Container from "$lib/components/Container.svelte";
   import Notification from "./Notification.svelte";
   import Link from "./Link.svelte";
+  import Links from "./Links.svelte";
+  import Logo from "$lib/components/Logo/Logo.svelte";
   import { cart } from "$lib/stores/cart.svelte";
   import { ui } from "$lib/stores/ui.svelte";
 
   let headerEl: HTMLElement;
 
+  const palmier = "/icons/palmier.svg";
+  const dromadaire = "/icons/dromadaire.svg";
+
   function setupScroll() {
     let prev = 0;
+    const logoEl = document.querySelector(".logo");
     window.addEventListener("scroll", () => {
       const progress =
         (window.scrollY / (document.body.scrollHeight - window.innerHeight)) *
@@ -25,6 +27,7 @@
       const newTop = window.scrollY;
       const method = newTop > prev ? "add" : "remove";
       headerEl?.classList[method]("shrunk");
+      logoEl?.classList[method]("shrunk");
 
       const full = "calc(var(--header-height) + var(--notification-height))";
       const shrunk =
@@ -57,28 +60,11 @@
       <header bind:this={headerEl}>
         <div class="item navigation">
           <div class="links">
-            <Link
-              url="/products"
-              name="Collection"
-              icon="/icons/palmier.svg"
-              description="Voir nos modèles de papier peint."
-            />
-            <Link
-              url="/professionels"
-              name="Professionnels"
-              icon="/icons/dromadaire.svg"
-              description="Espace professionnel."
-            />
-            <Link
-              url="/contact"
-              name="Contact"
-              icon="/icons/contact.svg"
-              description="Nous contacter."
-            />
+            <Links />
           </div>
         </div>
 
-        <div class="item centered limited">
+        <div class="item main-item centered limited">
           <button
             class="hamburger hidden"
             onclick={() => ui.toggleMenu()}
@@ -87,9 +73,7 @@
             <span></span><span></span><span></span>
           </button>
           <div class="logo-wrap">
-            <a href="/" class="logo-link">
-              <img src="/logo.svg" alt="MAISONS D'ANTAN" />
-            </a>
+            <Logo />
           </div>
           <button class="theme mobile" onclick={() => ui.toggleDark()}>
             {#if ui.darkMode}
@@ -100,25 +84,30 @@
           </button>
         </div>
 
-        <div class="item controls">
-          <Link
-            url="/guide/catalogue"
-            name="Catalogue"
-            icon="/icons/palmier.svg"
-          />
-          <Link
-            url="/panier"
-            name="Panier{cart.count > 0 ? ` (${cart.count})` : ''}"
-            icon="/icons/dromadaire.svg"
-            description="Voir votre panier."
-          />
-          <button class="theme" onclick={() => ui.toggleDark()}>
-            {#if ui.darkMode}
-              <div class="icon" transition:scale><Fa icon={faSun} /></div>
-            {:else}
-              <div class="icon" transition:scale><Fa icon={faMoon} /></div>
-            {/if}
-          </button>
+        <div class="item">
+          <div class="controls">
+            <Link
+              url="/guide/catalogue"
+              icon={palmier}
+              name="Catalogue"
+              description="Voir les produits disponibles."
+            />
+
+            <Link
+              url="/panier"
+              icon={dromadaire}
+              name="Panier{cart.count > 0 ? ` (${cart.count})` : ''}"
+              description="Voir votre panier et vos achats en cours."
+            />
+
+            <button class="theme" onclick={() => ui.toggleDark()}>
+              {#if ui.darkMode}
+                <div class="icon" transition:scale><Fa icon={faSun} /></div>
+              {:else}
+                <div class="icon" transition:scale><Fa icon={faMoon} /></div>
+              {/if}
+            </button>
+          </div>
         </div>
       </header>
     </Container>
@@ -138,86 +127,135 @@
     z-index: 1000;
   }
 
+  .theme {
+    padding: 0;
+    background: none;
+    border: none;
+    outline: none;
+
+    aspect-ratio: 9 / 13;
+    cursor: var(--cursor-pointer);
+
+    position: relative;
+
+    height: 100%;
+  }
+
+  .theme .icon {
+    font-size: 1.5rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: all var(--animation-duration) ease;
+  }
+
+  .theme:hover .icon {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+
   .head {
     position: relative;
+
+    /* glass effect */
     backdrop-filter: blur(10px);
     background-color: rgba(255, 255, 255, 0.5);
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   }
 
+  .progress-wrapper {
+    width: 100%;
+    border-radius: var(--progress-height);
+    overflow: hidden;
+    height: var(--progress-height);
+
+    opacity: 0.5;
+
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+  }
+
+  .progress {
+    width: var(--progress);
+    background-color: var(--secondary);
+    height: 100%;
+  }
+
+  .limited {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   header {
     width: 100%;
+
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
+
     height: var(--header-height);
-    transition: height var(--animation-duration);
+    transition: all var(--animation-duration) ease;
   }
 
   :global(header.shrunk) {
     height: calc(var(--header-height) * var(--nav-scalar)) !important;
   }
 
+  header > * {
+    flex-grow: 1;
+    flex-basis: 0;
+  }
+
   .item {
     flex: 1;
     height: 100%;
+
     display: flex;
     align-items: center;
   }
 
   .centered {
+    display: flex;
     justify-content: center;
-  }
-
-  .controls {
-    justify-content: flex-end;
-    gap: 0.5rem;
+    align-items: center;
   }
 
   .links {
     width: 100%;
     height: 100%;
+
     display: flex;
+    flex-direction: row;
+    justify-content: stretch;
     align-items: center;
   }
 
-  :global(.links > *) {
+  .links > :global(*) {
     width: calc(100% / 3);
   }
 
-  .logo-link {
-    text-decoration: none;
+  .controls {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+
+    float: right;
   }
 
-  .logo-text {
-    font-family: var(--f-primary);
-    font-size: 1.4rem;
-    letter-spacing: 0.2rem;
-    color: var(--secondary);
-    white-space: nowrap;
+  .hidden {
+    display: none;
   }
 
   .logo-wrap {
-    transition: all var(--animation-duration);
-  }
-
-  .theme {
-    padding: 0;
-    background: none;
-    border: none;
-    width: 30px;
-    aspect-ratio: 1;
-    position: relative;
-    cursor: var(--cursor-pointer);
-  }
-
-  .icon {
-    font-size: 1.3rem;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    transition: all var(--animation-duration);
+    height: 100%;
+    transition: all var(--animation-duration) ease;
+    max-height: calc(var(--header-height) * var(--nav-scalar));
   }
 
   .hamburger {
@@ -227,7 +265,7 @@
     background: none;
     border: none;
     cursor: var(--cursor-pointer);
-    padding: 4px;
+    padding: 0;
   }
 
   .hamburger span {
@@ -239,26 +277,9 @@
     transition: all var(--animation-duration);
   }
 
-  .progress-wrapper {
-    width: 100%;
-    height: var(--progress-height);
-    overflow: hidden;
-    opacity: 0.5;
-  }
-
-  .progress {
-    width: var(--progress);
-    background-color: var(--secondary);
-    height: 100%;
-    transition: width 0.1s linear;
-  }
-
   .theme.mobile {
     display: none;
-  }
-
-  .limited {
-    padding: 0;
+    width: 30px;
   }
 
   @media screen and (max-width: 1050px) {
@@ -266,18 +287,48 @@
       display: none;
     }
 
-    .hamburger {
-      display: flex !important;
+    .centered {
+      justify-content: flex-start;
+    }
+
+    .hidden {
+      display: flex;
+    }
+
+    .main-item {
+      gap: 1.2rem;
     }
   }
 
   @media screen and (max-width: 810px) {
-    .controls {
+    .item:not(.main-item) {
+      display: none;
+    }
+
+    .theme {
       display: none;
     }
 
     .theme.mobile {
-      display: block;
+      display: block !important;
+    }
+
+    :global(html) {
+      --margin: 2rem !important;
+    }
+
+    .main-item {
+      flex-grow: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--margin);
+    }
+  }
+
+  @media screen and (max-width: 420px) {
+    .logo-wrap {
+      height: fit-content;
     }
   }
 </style>

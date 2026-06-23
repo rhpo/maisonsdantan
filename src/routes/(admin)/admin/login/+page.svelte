@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
+	import Loading from '$lib/components/admin/Loading.svelte';
 
 	let status = $derived($page.url.searchParams.get('status'));
 	let submitting = $state(false);
@@ -12,9 +13,11 @@
 	};
 </script>
 
+<Loading show={submitting} />
+
 <div class="login-page">
 	<div class="card">
-		<h1>MAISONS D'ANTAN</h1>
+		<img class="logo" src="/logo.svg" alt="MAISONS D'ANTAN" />
 		<p class="sub">Administration</p>
 
 		{#if status && messages[status]}
@@ -60,10 +63,10 @@
 		text-align: center;
 	}
 
-	h1 {
-		font-family: var(--f-primary);
-		font-size: 1.5rem;
-		letter-spacing: 0.2rem;
+	.logo {
+		width: 220px;
+		max-width: 100%;
+		height: auto;
 	}
 
 	.sub {

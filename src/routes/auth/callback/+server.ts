@@ -16,15 +16,22 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
 			const OWNER_EMAIL = 'ramyhadid.js@gmail.com';
 			const isOwner = user.email === OWNER_EMAIL;
 
+			const profile = {
+				id: user.id,
+				email: user.email ?? '',
+				display_name: user.user_metadata.full_name ?? user.email ?? '',
+				photo_url: user.user_metadata.avatar_url ?? null
+			};
+
+			// Owner is always authorized, regardless of any prior row.
+			if (isOwner) {
+				await upsertAdminUser({ ...profile, status: 'authorized' });
+				redirect(303, next);
+			}
+
 			if (!existing) {
-				await upsertAdminUser({
-					id: user.id,
-					email: user.email ?? '',
-					display_name: user.user_metadata.full_name ?? user.email ?? '',
-					photo_url: user.user_metadata.avatar_url ?? null,
-					status: isOwner ? 'authorized' : 'pending'
-				});
-				if (!isOwner) redirect(303, '/admin/login?status=pending');
+				await upsertAdminUser({ ...profile, status: 'pending' });
+				redirect(303, '/admin/login?status=pending');
 			}
 
 			if (existing.status === 'authorized') {

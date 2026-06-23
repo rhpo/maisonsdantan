@@ -8,6 +8,56 @@ export async function listOrders(): Promise<Order[]> {
 	return ordersDb.getOrders();
 }
 
+import type { Product, Model } from '$lib/types';
+
+export type EnrichedCartItem = {
+	id: number;
+	model: number;
+	width: number;
+	height: number;
+	material: string;
+	crop: { x?: number; y?: number };
+	product?: Product;
+	variant?: Model;
+};
+
+export type EnrichedOrder = Omit<Order, 'cart'> & { cart: EnrichedCartItem[] };
+
+// Old (migrated) carts use productID/variantID + crop{top,left};
+// new carts use id/model + crop{x,y}. Normalize both here.
+function normalizeItem(raw: Record<string, unknown>): Omit<EnrichedCartItem, 'product' | 'variant'> {
+	const crop = (raw.crop ?? {}) as Record<string, number>;
+	return {
+		id: Number(raw.id ?? raw.productID),
+		model: Number(raw.model ?? raw.variantID),
+		width: Number(raw.width),
+		height: Number(raw.height),
+		material: String(raw.material ?? ''),
+		crop: { x: crop.x ?? crop.left, y: crop.y ?? crop.top }
+	};
+}
+
+export async function listOrdersWithProducts(): Promise<EnrichedOrder[]> {
+	const orders = await ordersDb.getOrders();
+	const cache = new Map<number, Product | null>();
+
+	return Promise.all(
+		orders.map(async (order) => ({
+			...order,
+			cart: await Promise.all(
+				(order.cart as unknown as Record<string, unknown>[]).map(async (raw) => {
+					const item = normalizeItem(raw);
+					if (Number.isNaN(item.id)) return { ...item, product: undefined, variant: undefined };
+					if (!cache.has(item.id)) cache.set(item.id, await productsDb.getProduct(item.id));
+					const product = cache.get(item.id) ?? undefined;
+					const variant = product?.models?.find((m) => m.id === item.model);
+					return { ...item, product, variant };
+				})
+			)
+		}))
+	);
+}
+
 export async function getOrder(id: number): Promise<Order | null> {
 	return ordersDb.getOrder(id);
 }

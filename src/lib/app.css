@@ -37,7 +37,7 @@
   /* Navigation */
   --header-height: 110px;
   --nav-scalar: 0.6;
-  --notification-height: 3.75rem;
+  --notification-height: 3rem;
   --nav-height: calc(var(--header-height) + var(--notification-height));
   --preferences-height: 60px;
 
@@ -66,7 +66,9 @@
   }
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -75,7 +77,8 @@
   color: inherit;
 }
 
-body, html {
+body,
+html {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -94,7 +97,12 @@ html.dark iframe {
   filter: invert(1) hue-rotate(180deg);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--f-primary);
   font-weight: normal;
   margin: 0;
@@ -110,11 +118,15 @@ img {
   user-select: none;
 }
 
-a, button, [href] {
+a,
+button,
+[href] {
   cursor: var(--cursor-pointer);
 }
 
-a:focus { outline: none; }
+a:focus {
+  outline: none;
+}
 
 ::selection {
   background-color: orange;
@@ -126,10 +138,24 @@ a:focus { outline: none; }
   background-color: transparent;
 }
 
-p, h1, h2, h3, h4, h5, h6,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 input[type="text"],
 input[type="tel"],
 input[type="email"],
 input[type="search"] {
   cursor: text;
+}
+
+/* links (and anything nested in them) always use the pointer cursor,
+   overriding the text-cursor rule above for nested p/headings */
+a, a *,
+button, button *,
+[href], [href] * {
+  cursor: var(--cursor-pointer);
 }

@@ -1,73 +1,76 @@
 <script lang="ts">
-	import { slide } from 'svelte/transition';
-	import { ui } from '$lib/stores/ui.svelte';
-	import { cart } from '$lib/stores/cart.svelte';
+  import Links from "./Links.svelte";
+
+  import { slide } from "svelte/transition";
+  import { ui } from "$lib/stores/ui.svelte";
+
+  $effect(() => {
+    document.body.style.overflow = ui.menuOpen ? "hidden" : "auto";
+  });
 </script>
 
 {#if ui.menuOpen}
-	<div class="overlay" transition:slide={{ axis: 'y', duration: 250 }}>
-		<nav>
-			<ul>
-				<li><a href="/products" onclick={() => ui.closeMenu()}>Collection</a></li>
-				<li><a href="/guide/catalogue" onclick={() => ui.closeMenu()}>Catalogue</a></li>
-				<li><a href="/professionels" onclick={() => ui.closeMenu()}>Professionnels</a></li>
-				<li><a href="/contact" onclick={() => ui.closeMenu()}>Contact</a></li>
-				<li>
-					<a href="/panier" onclick={() => ui.closeMenu()}>
-						Panier{cart.count > 0 ? ` (${cart.count})` : ''}
-					</a>
-				</li>
-			</ul>
-		</nav>
-
-		<button class="close" onclick={() => ui.closeMenu()} aria-label="Fermer">✕</button>
-	</div>
+  <menu
+    transition:slide={{
+      axis: "x",
+      duration: 500,
+      delay: 0,
+    }}
+  >
+    <div class="content">
+      <div class="wrapper">
+        <Links mobile />
+      </div>
+    </div>
+  </menu>
 {/if}
 
 <style>
-	.overlay {
-		position: fixed;
-		inset: 0;
-		z-index: 999;
-		background-color: rgba(255, 255, 255, 0.97);
-		backdrop-filter: blur(8px);
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-	}
+  menu {
+    transition: all var(--animation-duration) ease;
 
-	nav ul {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 2rem;
-		text-align: center;
-	}
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
 
-	nav a {
-		font-family: var(--f-primary);
-		font-size: 2rem;
-		letter-spacing: 0.2rem;
-		color: var(--secondary);
-		text-transform: uppercase;
-		transition: opacity var(--animation-duration);
-	}
+    padding: 0;
+    padding-top: var(--nav-height);
 
-	nav a:hover {
-		opacity: 0.5;
-	}
+    width: 100%;
+    height: 100%;
 
-	.close {
-		position: absolute;
-		top: 2rem;
-		right: 2rem;
-		background: none;
-		border: none;
-		font-size: 2rem;
-		cursor: var(--cursor-pointer);
-		color: var(--secondary);
-	}
+    background-color: #fffffff0;
+
+    /* shadow on the right that is widely spread */
+    box-shadow: 0 0 10px 10px rgba(0, 0, 0, 0.5);
+
+    margin: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    gap: 1rem;
+  }
+
+  .wrapper :global(.link) {
+    font-size: 1.5rem;
+  }
 </style>

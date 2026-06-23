@@ -1,11 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
-import { listOrders, completeOrder, removeOrder, markAllRead } from '$lib/server/services/order.service';
+import { listOrdersWithProducts, completeOrder, removeOrder, markAllRead } from '$lib/server/services/order.service';
 import { requireAdmin } from '$lib/server/guards/admin';
 import { fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async (event) => {
 	await requireAdmin(event);
-	const orders = await listOrders();
+	const orders = await listOrdersWithProducts();
 	return { orders };
 };
 

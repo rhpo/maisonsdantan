@@ -60,7 +60,10 @@ async function clearTables() {
   console.log('  ✓ Done\n');
 }
 
-async function migrateProducts() {
+async function migrateProducts(): Promise<{
+  productIdMap: Map<number, number>;
+  modelIdMap: Map<number, number>;
+}> {
   const products = source.products as OldProduct[];
   console.log(`→ Migrating ${products.length} products, models & shootings (batched)...`);
 
@@ -134,6 +137,12 @@ async function migrateProducts() {
   }
   console.log(`  ✓ ${newModelIds.length} models inserted`);
 
+  // old model id → new model id (old variant ids are globally unique randoms)
+  const modelIdMap = new Map<number, number>();
+  for (let i = 0; i < modelEntries.length; i++) {
+    modelIdMap.set(modelEntries[i].oldMid, newModelIds[i]);
+  }
+
   // Step 4: build shooting rows — fresh UUID per shooting (fixes collision)
   // Store placeholder 'src:{old_pid}/{old_mid}/{old_sid}' so migrate:uploads can find the file
   const shootingRows: Array<{ id: string; model_id: number; image: string }> = [];
@@ -158,9 +167,14 @@ async function migrateProducts() {
     if (error) throw new Error(`Shootings batch failed: ${error.message}`);
   }
   console.log(`  ✓ ${shootingRows.length} shootings inserted`);
+
+  return { productIdMap, modelIdMap };
 }
 
-async function migrateOrders() {
+async function migrateOrders(
+  productIdMap: Map<number, number>,
+  modelIdMap: Map<number, number>
+) {
   // Handle both flat array and {completed, pending} object
   const allOrders: unknown[] = Array.isArray(source.orders)
     ? source.orders
@@ -172,10 +186,29 @@ async function migrateOrders() {
   }
   console.log(`\n→ Migrating ${allOrders.length} orders...`);
 
+  // Remap old product/variant ids → new ids and normalize cart item keys
+  // (old: productID/variantID/crop{top,left} → new: id/model/crop{x,y})
+  const normalizeCart = (cart: unknown) => {
+    if (!Array.isArray(cart)) return [];
+    return cart.map((c: Record<string, unknown>) => {
+      const oldPid = Number(c.id ?? c.productID);
+      const oldVid = Number(c.model ?? c.variantID);
+      const crop = (c.crop ?? {}) as Record<string, number>;
+      return {
+        id: productIdMap.get(oldPid) ?? oldPid,
+        model: modelIdMap.get(oldVid) ?? oldVid,
+        width: Number(c.width) || 0,
+        height: Number(c.height) || 0,
+        material: String(c.material ?? ''),
+        crop: { x: crop.x ?? crop.left ?? 0, y: crop.y ?? crop.top ?? 0 }
+      };
+    });
+  };
+
   const rows = allOrders.map((o: unknown) => {
     const order = o as Record<string, unknown>;
     return {
-      cart: order.cart ?? [],
+      cart: normalizeCart(order.cart),
       info: order.info ?? {},
       read: order.read ?? false,
       pending: order.pending ?? true,
@@ -237,14 +270,35 @@ async function migrateLogs() {
   else console.log(`  ✓ ${rows.length} logs inserted`);
 }
 
+async function safetyGuard() {
+  // Re-running this wipes ALL tables and regenerates product/shooting ids,
+  // which ORPHANS images already uploaded to Storage by migrate:uploads.
+  // Refuse to run against a populated DB unless explicitly forced.
+  const { count } = await db
+    .from('products')
+    .select('id', { count: 'exact', head: true });
+
+  if ((count ?? 0) > 0 && process.env.FORCE !== '1') {
+    console.error(
+      `\n⛔ Aborting: 'products' already has ${count} rows.\n` +
+        `   This script CLEARS every table and regenerates ids — it will\n` +
+        `   orphan all product images in Storage. You'd have to re-run\n` +
+        `   'pnpm migrate:uploads' afterwards (and have the source files).\n\n` +
+        `   If you really mean it, re-run with:  FORCE=1 pnpm migrate:db\n`
+    );
+    process.exit(1);
+  }
+}
+
 async function main() {
   console.log('🚀 Starting migration (batched)...\n');
   console.log(`Source: ${dbPath}`);
   console.log(`Target: ${SUPABASE_URL}\n`);
 
+  await safetyGuard();
   await clearTables();
-  await migrateProducts();
-  await migrateOrders();
+  const { productIdMap, modelIdMap } = await migrateProducts();
+  await migrateOrders(productIdMap, modelIdMap);
   await migrateMessages();
   await migrateLogs();
 
