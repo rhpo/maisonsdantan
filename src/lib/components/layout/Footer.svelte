@@ -3,6 +3,8 @@
   import LinkIcon from "$lib/components/layout/LinkIcon.svelte";
   import Container from "$lib/components/Container.svelte";
 
+  import { BRAND } from '$lib/config/brand.ts';
+
   import Fa from "svelte-fa";
 
   import {
