@@ -136,16 +136,16 @@
 
             <LinkIcon
               class="link"
-              href={BRAND.email.href}
+              href={"mailto:" + BRAND.email.raw}
               icon={faEnvelope}
               name={BRAND.email.display}
             />
 
             <LinkIcon
               class="link"
-              href={BRAND.phone.href}
+              href={"tel:" + BRAND.phone.raw}
               icon={faPhone}
-              name="0559 620 682
+              name={BRAND.phone.display}
             />
           </div>
         </section>
