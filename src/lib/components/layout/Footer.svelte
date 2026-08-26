@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Logo from '$lib/components/Logo/Logo.svelte';
-  import LinkIcon from '$lib/components/layout/LinkIcon.svelte';
-  import Container from '$lib/components/Container.svelte';
+  import Logo from "$lib/components/Logo/Logo.svelte";
+  import LinkIcon from "$lib/components/layout/LinkIcon.svelte";
+  import Container from "$lib/components/Container.svelte";
 
-  import Fa from 'svelte-fa';
+  import Fa from "svelte-fa";
 
   import {
     faPhone,
@@ -11,19 +11,19 @@
     faBook,
     faFileAlt,
     faEnvelope,
-    faHelmetSafety
-  } from '@fortawesome/free-solid-svg-icons';
+    faHelmetSafety,
+  } from "@fortawesome/free-solid-svg-icons";
 
   import {
     faInstagram,
     faFacebook,
     faLinkedin,
-    faWhatsapp
-  } from '@fortawesome/free-brands-svg-icons';
+    faWhatsapp,
+  } from "@fortawesome/free-brands-svg-icons";
 
-  const logo = '/logosmall.png';
-  const codiha = '/codiha.svg';
-  const footerImage = '/hero.jpg';
+  const logo = "/logosmall.png";
+  const codiha = "/codiha.svg";
+  const footerImage = "/hero.jpg";
 </script>
 
 <div class="wrapper-all revert">
@@ -117,7 +117,7 @@
             <a
               class="whatsapp"
               target="_blank"
-              href="https://api.whatsapp.com/send?phone=+213559620682&text=Bonjour, je veux passer une commande chez MAISONS D'ANTAN."
+              href="https://api.whatsapp.com/send?phone={BRAND.phone.raw}&text=Bonjour, je veux passer une commande chez MAISONS D'ANTAN."
             >
               <Fa icon={faWhatsapp} />
               Envoyez-nous un message
@@ -136,16 +136,16 @@
 
             <LinkIcon
               class="link"
-              href="mailto:contact@maisonsdantan.co"
+              href={BRAND.email.href}
               icon={faEnvelope}
-              name="contact@maisonsdantan.co"
+              name={BRAND.email.display}
             />
 
             <LinkIcon
               class="link"
-              href="tel:+213559620682"
+              href={BRAND.phone.href}
               icon={faPhone}
-              name="0559 620 682"
+              name="0559 620 682
             />
           </div>
         </section>
