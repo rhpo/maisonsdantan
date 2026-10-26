@@ -3,6 +3,7 @@
 	import Fa from 'svelte-fa';
 	import { faSearch, faTrashCan, faAdd, faGlobeAfrica } from '@fortawesome/free-solid-svg-icons';
 	import Loading from '$lib/components/admin/Loading.svelte';
+	import { compressImage } from '$lib/image/compress';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -10,6 +11,7 @@
 	let showAddForm = $state(false);
 	let searchValue = $state('');
 	let submitting = $state(false);
+	let loadingLabel = $state('');
 
 	const track = () => {
 		submitting = true;
@@ -18,6 +20,40 @@
 			await update();
 		};
 	};
+
+	/**
+	 * Downscale + WebP-encode every selected image in the browser before the
+	 * form goes out. The server cannot do this (Cloudflare Workers can't run
+	 * sharp), and it keeps the request body far below the 100 MB Workers limit.
+	 */
+	async function compressFormImages(formData: FormData) {
+		const groups: { key: string; files: File[] }[] = [];
+
+		for (let i = 0; i < variants.length; i++) {
+			const key = `variant_shootings_${i}`;
+			const files = formData
+				.getAll(key)
+				.filter((v): v is File => v instanceof File && v.size > 0);
+			if (files.length > 0) groups.push({ key, files });
+		}
+
+		const total = groups.reduce((n, g) => n + g.files.length, 0);
+		if (total === 0) return;
+
+		let done = 0;
+		for (const { key, files } of groups) {
+			const processed: File[] = [];
+			for (const file of files) {
+				loadingLabel = `Optimisation des images… ${done + 1}/${total}`;
+				processed.push(await compressImage(file));
+				done++;
+			}
+			formData.delete(key);
+			for (const file of processed) formData.append(key, file);
+		}
+
+		loadingLabel = 'Envoi en cours…';
+	}
 
 	// dynamic variants — each becomes one model with its own shooting images
 	let variants = $state<{ key: string }[]>([{ key: crypto.randomUUID() }]);
@@ -46,7 +82,7 @@
 	);
 </script>
 
-<Loading show={submitting} />
+<Loading show={submitting} label={loadingLabel} />
 
 <main>
 	<div class="section add">
@@ -64,10 +100,17 @@
 				method="POST"
 				action="?/add"
 				enctype="multipart/form-data"
-				use:enhance={() => {
+				use:enhance={async ({ formData }) => {
 					submitting = true;
+					try {
+						await compressFormImages(formData);
+					} catch (e) {
+						// Compression is best-effort; fall through with the originals.
+						console.error('Image compression failed, uploading originals', e);
+					}
 					return async ({ update }) => {
 						submitting = false;
+						loadingLabel = '';
 						await update();
 					};
 				}}

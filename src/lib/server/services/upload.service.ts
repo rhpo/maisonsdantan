@@ -1,22 +1,37 @@
-import sharp from 'sharp';
 import { db } from '$lib/server/db/client';
 
 const BUCKET = 'media';
-const MAX_WIDTH = 1920;
-const QUALITY = 82;
+
+/**
+ * Images arrive already downscaled and WebP-encoded by the browser
+ * (see `$lib/image/compress`). Nothing here touches pixels: Cloudflare Workers
+ * cannot run sharp, so the server only validates and stores.
+ */
+const EXTENSIONS: Record<string, string> = {
+	'image/webp': 'webp',
+	'image/jpeg': 'jpg',
+	'image/png': 'png',
+	'image/avif': 'avif',
+	'image/gif': 'gif',
+	'image/svg+xml': 'svg'
+};
+
+const MAX_BYTES = 15 * 1024 * 1024;
 
 export async function uploadImage(file: File, folder: string): Promise<string> {
-	const buffer = new Uint8Array(await file.arrayBuffer());
+	const contentType = file.type || 'application/octet-stream';
+	const ext = EXTENSIONS[contentType];
 
-	const processed = await sharp(buffer)
-		.resize({ width: MAX_WIDTH, withoutEnlargement: true })
-		.webp({ quality: QUALITY })
-		.toBuffer();
+	if (!ext) throw new Error(`Unsupported image type: ${contentType}`);
+	if (file.size === 0) throw new Error('Empty image file');
+	if (file.size > MAX_BYTES) {
+		throw new Error(`Image too large: ${(file.size / 1024 / 1024).toFixed(1)} MB (max 15 MB)`);
+	}
 
-	const filename = `${folder}/${crypto.randomUUID()}.webp`;
+	const filename = `${folder}/${crypto.randomUUID()}.${ext}`;
 
-	const { error } = await db.storage.from(BUCKET).upload(filename, processed, {
-		contentType: 'image/webp',
+	const { error } = await db.storage.from(BUCKET).upload(filename, file, {
+		contentType,
 		upsert: false
 	});
 
