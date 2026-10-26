@@ -15,11 +15,12 @@
 		"migrate:relink": "npx tsx scripts/relink-images.ts"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^7.0.1",
+		"@sveltejs/adapter-cloudflare": "^7.2.9",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@types/aos": "^3.0.8",
 		"@types/sharp": "^0.32.0",
+		"sharp": "^0.34.0",
 		"svelte": "^5.56.1",
 		"svelte-check": "^4.6.0",
 		"tsx": "^4.0.0",
@@ -33,7 +34,6 @@
 		"@supabase/ssr": "^0.6.1",
 		"@supabase/supabase-js": "^2.49.0",
 		"aos": "^2.3.4",
-		"sharp": "^0.34.0",
 		"svelte-fa": "^4.0.2",
 		"svelte-meta-tags": "^4.0.0"
 	}
